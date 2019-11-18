@@ -9,4 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-lipschitz-rs = { path = "C:\\Users\\Ethan\\Desktop\\lipschitz-rs" }
+lipschitz = { path = "C:\\Users\\Ethan\\Desktop\\lipschitz-rs" }
+otcore = { path = "C:\\Users\\Ethan\\Desktop\\otcore-rs" }
+tree-sitter = "0.3.10"
+lazy_static = "1.4.0"
