@@ -1,0 +1,59 @@
+html 
+{
+    background-color: var(--bg);
+    color: var(--fg);
+    line-height: 100%;
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+}
+
+[contenteditable]:focus {
+    outline: 0px solid transparent;
+}
+
+body{padding: 0; margin: 0;}
+
+/* variable declaration */
+/*variable_declaration { color: var(--blue); }*/
+return_statement return, binary_expression identifier, variable_declarator identifier, function_declaration identifier { color: var(--green); }
+
+formal_parameters identifier { color: var(--magenta); }
+
+/* keywords */
+
+null, export, import, from { color: var(--orange); }
+if, import_clause identifier { color: var(--blue); }
+
+string { color: var(--cyan); }
+
+const, export, static { color: var(--yellow); }
+
+lines {
+    line-height: 100%;
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+    float: left; 
+    background-color: var(--black); 
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+}
+
+::selection
+{
+    background-color: var(--fg);
+}
+
+error
+{
+    text-decoration: underline red;
+}
+
+while, member_expression property_identifier
+{
+    color: var(--br_blue);
+}
