@@ -1,11 +1,11 @@
-use super::{ Pipetext };
-use web_sys::{ KeyboardEvent, Selection, console }; //
+use super::{ Core };
+use web_sys::{ KeyboardEvent, Selection, Node, console }; //
 use wasm_bindgen::prelude::*;
 
 use xi_rope::{ LinesMetric, Rope };
 
 #[wasm_bindgen]
-impl Pipetext
+impl Core
 {
     pub fn key_down_handler(&mut self, event: KeyboardEvent)
     {
@@ -14,12 +14,10 @@ impl Pipetext
         {
             Some(sel) => {
                 
+                let code_node : Node = self.div.clone().into();
+
                 //convert the ranges into std::ops::Ranges
-                let mut ranges : Vec<std::ops::Range<usize>> = (0..sel.range_count()).map(|i| 
-                { 
-                    let range = sel.get_range_at(i).unwrap(); 
-                    (range.start_offset().unwrap() as usize..range.end_offset().unwrap() as usize)
-                }).collect();
+                let mut ranges : Vec<std::ops::Range<usize>> = (0..sel.range_count()).map(|i| { get_range_relative_to_div(sel.get_range_at(i).unwrap(), &code_node) }).collect();
 
                 let key_string : String = match get_string(event, &mut ranges, sel.type_().as_str() == "Caret")
                 {
@@ -43,20 +41,51 @@ impl Pipetext
                 //apply the edits to the Rope
                 for range in ranges 
                 { 
-                    let before_line_nums = self.text.count::<LinesMetric>(range.start);
-                    let after_line_nums = before_line_nums + rope_newlines;
+                    let new_end_index = range.start + key_rope.len();
 
-                    self.text.edit(range, key_rope.clone());
+                    let start_row = self.text.count::<LinesMetric>(range.start);
+                    let old_end_row = self.text.count::<LinesMetric>(range.end);
+                    let new_end_row = start_row + rope_newlines;
+
+                    let start_column_index = self.text.count_base_units::<LinesMetric>(start_row);
+                    let end_column_index = self.text.count_base_units::<LinesMetric>(old_end_row);
+                    let new_end_column_index = key_rope.count_base_units::<LinesMetric>(rope_newlines);
                     
-                    console::log_2(&JsValue::from(before_line_nums as u32), &JsValue::from(after_line_nums as u32));
+                    let start_column = range.start - start_column_index;
+                    let old_end_column = range.end - end_column_index;
+                    let new_end_column = match new_end_column_index > 0
+                    {
+                        //the end column is on a new line
+                        true => key_rope.len() - new_end_column_index,
+                        false => key_rope.len() + start_column
+                    };
+
+                    self.text.edit(range.clone(), key_rope.clone());
+
+                    self.pipetext_web_instance.edit_tree(
+                        range.start as u32,         //start_index
+                        range.end as u32,           //old_end_index
+                        new_end_index as u32,       // new_end_index 
+                        start_row as u32,           //start_row
+                        start_column as u32,        //start_column
+                        old_end_row as u32,         //old_end_row
+                        old_end_column as u32,      //old_end_column
+                        new_end_row as u32,         //new_end_row
+                        new_end_column as u32       //new_end_column
+                    );      
+
                 }
+
+                self.pipetext_web_instance.refresh(self.get_str(), cursor_offset as u32);
 
                 //self.incremental_parse();
 
                 //update the text_content with the changes
-                self.div.set_text_content(Some(self.get_str().as_str()));
+                //self.div.set_text_content(Some(self.get_str().as_str()));
 
-                self.put_cursor_back(sel, cursor_offset as u32);
+                //console::log_1(&JsValue::from(self.get_str()));
+
+                //self.put_cursor_back(sel, cursor_offset as u32);
             },
             None => {}//log_1(&JsValue::from("No Selection!"))
         }
@@ -79,6 +108,22 @@ impl Pipetext
     {
         self.selection = self.document.get_selection().unwrap();
     }
+}
+
+fn get_range_relative_to_div(range : web_sys::Range, div : &Node) -> std::ops::Range<usize>
+{
+    let pre_caret_range = range.clone_range();
+    //console::log_1(&pre_caret_range.start_container().unwrap());
+
+    pre_caret_range.select_node_contents(div);
+    pre_caret_range.set_end(&range.start_container().unwrap(), range.start_offset().unwrap());
+
+    let start_index : usize = pre_caret_range.to_string().length() as usize;
+    let end_index : usize = start_index + range.to_string().length() as usize;
+
+    //console::log_2(&JsValue::from(start_index as u32), &JsValue::from(end_index as u32));
+
+    return start_index..end_index;
 }
 
 fn get_string(event : KeyboardEvent, ranges : &mut Vec<std::ops::Range<usize>>, is_caret : bool) -> Option<String>

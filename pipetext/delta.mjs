@@ -1,6 +1,6 @@
-import { update_changed_nodes, recursive_debug } from "./recursive-tree-editor.mjs";
-import { build_node } from "./recursive-tree-builder.mjs";
-import { render_rows, build_tree } from "./tree-builder.mjs";
+//import { update_changed_nodes, recursive_debug } from "./recursive-tree-editor.mjs";
+//import { build_node } from "./recursive-tree-builder.mjs";
+//import { render_rows, build_tree } from "./tree-builder.mjs";
 
 export function get_edit(self)
 {
@@ -42,7 +42,7 @@ export function get_edit(self)
 
     return { edit : edit, cursor_index : cursorIndex }; 
 }
-
+/*
 export function get_tree_delta(self)
 {
     let changed_ranges = self.last_tree.getChangedRanges(self.tree)[0];
@@ -58,7 +58,7 @@ export function get_tree_delta(self)
     console.log(`NEW NODE : ${node_B.type} , id : ${ node_B.id }`);
 
     return {id : node_A.id , new_node : build_node(node_B, self.lastTextContent, 0) };
-}
+}*/
 function edit_html_nodes(tree_delta)
 {
     let changed_element = document.getElementById(tree_delta.id.toString());

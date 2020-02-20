@@ -1,20 +1,18 @@
-<html>
-  <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
-    <script src="tree-sitter/tree-sitter.js"></script>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>small.js</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <script src="pipetext/tree-sitter/tree-sitter.js"></script>
     <link rel="stylesheet" href="styles/selenized-dark.css">
     <link rel="stylesheet" href="styles/base.css">
-  </head>
-  <body>
-        <script>
-            async function get_lang(url)
-            {
-                
-                let lang = await TreeSitter.Language.load(url);
-                return lang;
-            }
-        </script>
-<div spellcheck="false", contenteditable="true" id="text-container" style="white-space: pre;">import Big from "big.js";
+
+</head>
+
+<body>
+<div spellcheck="false" id="text-container" style="white-space: pre;">import Big from "big.js";
 
 import operate from "./operate";
 import isNumber from "./isNumber";
@@ -149,77 +147,15 @@ export default function calculate(obj, buttonName) {
     };
 }
 </div>
+<div id="rows">
 
+</div>
     <script type="module">
-        import init, { Pipetext } from '/pkg/pipetext.js';
-
-        async function run() 
-        {
-
-            await TreeSitter.init();
-             
-            await init();
-            
-            let code_div = document.getElementById("text-container");
-
-            
-            let pipetext = await Pipetext.from_div(code_div);
-            
-            var t0 = performance.now();
-            pipetext.update_html();
-            console.log("Initialized in " + (performance.now() - t0) + " milliseconds.");
-
-            code_div.addEventListener("keydown", (e) => 
-            {
-                event.preventDefault(); 
-                event.stopPropagation();
-                console.log(e);
-                var t0 = performance.now(); 
-                pipetext.key_down_handler(e);
-                console.log("Total " + (performance.now() - t0) + " milliseconds.");
-            });
-
-            // addEventListener version
-            document.addEventListener('selectionchange', () => 
-            {
-                pipetext.selection_change_handler();
-                //let selection = document.getSelection();
-                //console.log(selection.getRangeAt(0));
-            });
-
-            //pipetext.edit(5,12,"");
-
-            //console.log(pipetext.get_str());
-        }
-
-        function get_caret_character_offset(element) 
-        {
-            var caretOffset = 0;
-            var doc = element.ownerDocument || element.document;
-            var win = doc.defaultView || doc.parentWindow;
-            var sel;
-            if (typeof win.getSelection != "undefined") {
-                
-                sel = win.getSelection();
-                if (sel.rangeCount > 0) {
-                    //console.log("big gainz!");
-                    var range = win.getSelection().getRangeAt(0);
-                    var preCaretRange = range.cloneRange();
-                    preCaretRange.selectNodeContents(element);
-                    preCaretRange.setEnd(range.startContainer, range.startOffset);
-                    return preCaretRange.toString().length;
-                }
-            } else if ( (sel = doc.selection) && sel.type != "Control") {
-                var textRange = sel.createRange();
-                var preCaretTextRange = doc.body.createTextRange();
-                preCaretTextRange.moveToElementText(element);
-                preCaretTextRange.setEndPoint("EndToEnd", textRange);
-                caretOffset = preCaretTextRange.text.length;
-            }
-            return caretOffset;
-        }
-
-        run();
+        import { PipeText } from "./pipetext/pipetext.mjs";
+        
+        var pt = new PipeText(document.getElementById("text-container"));
+    
     </script>
-  </body>
+</body>
+
 </html>

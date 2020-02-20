@@ -1,37 +1,101 @@
 import { build_tree } from "./tree-builder.mjs";
 import { get_edit } from "./delta.mjs";
 
+import init, { Core } from '../pkg/pipetext.js';
+
+
+
 export class PipeText
 {
     constructor(div)
     {
-        this.div = div;
-        
-        //create lineNums div
-        this.lineDiv = document.createElement('lines');
-        this.lineDiv.contentEditable = false;
-        
-        //move initial text to code div
-        this.codeDiv = document.createElement('code');
-        this.codeDiv.contentEditable = true;
-        this.codeDiv.style = "white-space: pre; float: left;"
-        this.codeDiv.innerHTML = this.div.innerHTML;
 
-        this.div.innerHTML = "";
+        init().then(()=>
+        {
+            this.div = div;
+            
+            //create lineNums div
+            this.lineDiv = document.createElement('lines');
+            this.lineDiv.contentEditable = false;
+            
+            //move initial text to code div
+            this.codeDiv = document.createElement('code');
+            this.codeDiv.contentEditable = true;
+            this.codeDiv.style = "white-space: pre; float: left;"
+            this.codeDiv.innerHTML = this.div.innerHTML;
 
-        this.div.appendChild(this.lineDiv);
-        this.div.appendChild(this.codeDiv);
+            this.core = Core.from_div(this.codeDiv, this);
 
-        this.lastTextContent = this.codeDiv.textContent;
+            div.addEventListener("keydown", (e) => 
+            {
+                event.preventDefault(); 
+                event.stopPropagation();
+                //console.log(e);
+                var t0 = performance.now(); 
+                this.core.key_down_handler(e);
+                console.log("Updated in " + (performance.now() - t0) + " milliseconds.");
+            });
 
-        let self = this;
+            // addEventListener version
+            document.addEventListener('selectionchange', () => 
+            {
+                this.core.selection_change_handler();
+            });
 
-        //TODO: make sure plain text only is pasted
-        this.codeDiv.addEventListener("input", function(e) { self.refresh_state(self); });
+            this.div.innerHTML = "";
 
-        this.init(self, "javascript").then((p) => console.log("initialized"));
+            this.div.appendChild(this.lineDiv);
+            this.div.appendChild(this.codeDiv);
+
+            let self = this;
+
+            //TODO: make sure plain text only is pasted
+            //this.codeDiv.addEventListener("input", function(e) { self.refresh_state(self); });
+
+            this.init(self, "javascript").then((p) => console.log("initialized"));
+        });
+    }
+
+    refresh(source_string, cursor_index)
+    {
+        //incremental parse
+        if(this.tree) this.last_tree = this.tree; 
+        this.tree = this.parser.parse(source_string, this.last_tree);
+
+        let result = build_tree(this.tree, document.createElement("div"), source_string, cursor_index);
+
+        this.codeDiv.innerHTML = "";
+
+        this.codeDiv.appendChild(result.html);
+        if(result.cursor_div) placeCursorBack(result.cursor_div, result.offset);
 
     }
+
+    edit_tree(start_index, old_end_index, new_end_index, 
+              start_row, start_column, old_end_row, 
+              old_end_column, new_end_row, new_end_column)
+    {
+        console.log(`{
+            startIndex: ${ start_index },
+            oldEndIndex: ${ old_end_index },
+            newEndIndex: ${ new_end_index},
+            startPosition: {row: ${ start_row }, column: ${ start_column }},
+            oldEndPosition: {row: ${ old_end_row }, column: ${ old_end_column }},
+            newEndPosition: {row: ${ new_end_row }, column: ${ new_end_column }},
+          }`);
+
+          //console.log(get_edit(this));
+
+        this.tree.edit({
+            startIndex: start_index,
+            oldEndIndex: old_end_index,
+            newEndIndex: new_end_index,
+            startPosition: {row: start_row, column: start_column},
+            oldEndPosition: {row: old_end_row, column: old_end_column },
+            newEndPosition: {row: new_end_row, column: new_end_column},
+        });
+    }
+
 
     async init(self, language)
     {
@@ -48,25 +112,22 @@ export class PipeText
         self.tree = null;
         self.last_tree = null;
 
-        await self.initState(self);
-    }
-
-    async initState(self, cursorIndex)
-    {
         var t0 = performance.now(); 
 
-        await self.incremental_parse(self);
+        self.tree = self.parser.parse(self.codeDiv.textContent, null);
 
         console.log("Parse took " + (performance.now() - t0) + " milliseconds.");
 
         let lineNumbers = self.tree.rootNode.endPosition.row;
 
-        await self.updateCodeTree(self, cursorIndex);
-        await self.refreshLineNums(lineNumbers,self);
+        self.updateCodeTree(0, self.codeDiv.textContent);
+        self.refreshLineNums(lineNumbers);
 
         console.log("Total " + (performance.now() - t0) + " milliseconds.");
     }
 
+    
+    /*
     async refresh_state(self)
     {
         //console.log(cursorIndex);
@@ -91,35 +152,35 @@ export class PipeText
     }
 
     async parse(self) { self.tree = self.parser.parse(self.lastTextContent, self.tree); }
-
-    async incremental_parse(self) 
+    
+    incremental_parse() 
     { 
-        if(self.tree) self.last_tree = self.tree; 
-        self.tree = self.parser.parse(self.lastTextContent, self.last_tree);
-    }
+        if(this.tree) this.last_tree = this.tree; 
+        this.tree = this.parser.parse(this.lastTextContent, this.last_tree);
+    }*/
 
-    updateCodeTree(self, cursorIndex)
+    updateCodeTree(cursorIndex, source_string)
     {
-        let result = build_tree(self.tree, document.createElement("div"), self.lastTextContent, cursorIndex);
+        let result = build_tree(this.tree, document.createElement("div"), source_string, cursorIndex);
 
-        self.codeDiv.innerHTML = "";
+        this.codeDiv.innerHTML = "";
 
-        self.codeDiv.appendChild(result.html);
+        this.codeDiv.appendChild(result.html);
         if(result.cursor_div) placeCursorBack(result.cursor_div, result.offset);
 
-        self.lastTextContent = self.codeDiv.textContent;
+        this.lastTextContent = this.codeDiv.textContent;
     }
 
-    refreshLineNums(lines,self)
+    refreshLineNums(lines)
     {
-        self.lineDiv.innerHTML = "";
+        this.lineDiv.innerHTML = "";
         for(var i = 0; i <= lines-1; i++)
         {
             let line = document.createElement('line');
             line.textContent = (i+1).toString();
-            self.lineDiv.appendChild(line);
+            this.lineDiv.appendChild(line);
             let newline = document.createTextNode('\n');
-            self.lineDiv.appendChild(newline);
+            this.lineDiv.appendChild(newline);
         }
     }
 }

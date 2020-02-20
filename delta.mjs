@@ -113,3 +113,57 @@ function debugPrintString(lineString)
     console.log(numString + "\r\n" + lineString);
 
 }
+
+/*
+
+        async function run() 
+        {
+
+            await TreeSitter.init();
+             
+            await init();
+            
+            let code_div = document.getElementById("text-container");
+
+            
+            let pipetext = await Pipetext.from_div(code_div);
+            
+            var t0 = performance.now();
+            pipetext.update_html();
+            console.log("Initialized in " + (performance.now() - t0) + " milliseconds.");
+
+            
+
+            //pipetext.edit(5,12,"");
+
+            //console.log(pipetext.get_str());
+        }
+
+        function get_caret_character_offset(element) 
+        {
+            var caretOffset = 0;
+            var doc = element.ownerDocument || element.document;
+            var win = doc.defaultView || doc.parentWindow;
+            var sel;
+            if (typeof win.getSelection != "undefined") {
+                
+                sel = win.getSelection();
+                if (sel.rangeCount > 0) {
+                    //console.log("big gainz!");
+                    var range = win.getSelection().getRangeAt(0);
+                    var preCaretRange = range.cloneRange();
+                    preCaretRange.selectNodeContents(element);
+                    preCaretRange.setEnd(range.startContainer, range.startOffset);
+                    return preCaretRange.toString().length;
+                }
+            } else if ( (sel = doc.selection) && sel.type != "Control") {
+                var textRange = sel.createRange();
+                var preCaretTextRange = doc.body.createTextRange();
+                preCaretTextRange.moveToElementText(element);
+                preCaretTextRange.setEndPoint("EndToEnd", textRange);
+                caretOffset = preCaretTextRange.text.length;
+            }
+            return caretOffset;
+        }
+
+        run(); */
